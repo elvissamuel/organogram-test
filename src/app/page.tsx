@@ -17,7 +17,6 @@ export default function Home() {
   const [allQuestions, setAllQuestions] = useState<QuestionData>()
   const [openDialogue, setOpenDialogue] = useState(false)
   const [selectedOptions, setSelectedOptions] = useState<{ [key: string]: string | null }>({});
-  // const token = localStorage.getItem("qt-token")
   const router = useRouter()
 
   useEffect(()=>{
@@ -30,13 +29,6 @@ export default function Home() {
       }
   }, [router])
 
-  // useEffect(()=>{
-  //   if (token){
-  //     setMyToken(JSON.parse(token))
-  //   }else{
-  //     setMyToken("")
-  //   }
-  // }, [token])
   const {data, isLoading, refetch, isError} = useQuery({
     queryKey: ['All_Questions'],
     queryFn: async () => {
@@ -64,22 +56,6 @@ export default function Home() {
       toast.error("Couldn't delete question.", {position:'top-right'} )
     }
   }
-  
-  // useEffect(()=>{
-  //   if(myToken !== ""){
-  //     router.push("/register")
-  //     return
-  //   }
-  // }, [myToken, router])
-
-  // if (typeof window !== 'undefined' && window.localStorage){
-  //   const token = localStorage.getItem("qt-token")
-  //   router.push('/register')
-
-    // if(!token){
-    // }
-    // setMyToken(JSON.parse(token!))
-    // }
   
     
   return (
