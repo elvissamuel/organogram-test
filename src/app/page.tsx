@@ -1,112 +1,120 @@
+"use client";
+
 import Image from 'next/image'
+import { useQuery } from '@tanstack/react-query'
+import { deleteSingleQuestion, getAllQuestions, registerUserNew } from './api-calls'
+import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import logo from '../assets/imgs/question-time-high-resolution-logo.png'
+import { toast, Toaster } from 'sonner';
+import DialogueBox from './components/DialogueBox';
+
+type QuestionData = [string, { question: string; options: string[] }][];
 
 export default function Home() {
+  const [myToken, setMyToken] = useState<string>("")
+  const [allQuestions, setAllQuestions] = useState<QuestionData>()
+  const [openDialogue, setOpenDialogue] = useState(false)
+  const [selectedOptions, setSelectedOptions] = useState<{ [key: string]: string | null }>({});
+  // const token = localStorage.getItem("qt-token")
+  const router = useRouter()
+
+  useEffect(()=>{
+    if (typeof window !== 'undefined' && window.localStorage){
+      const token = localStorage.getItem("qt-token")
+      if(!token){
+        router.push('/register')
+      }
+      setMyToken(JSON.parse(token!))
+      }
+  }, [router])
+
+  // useEffect(()=>{
+  //   if (token){
+  //     setMyToken(JSON.parse(token))
+  //   }else{
+  //     setMyToken("")
+  //   }
+  // }, [token])
+  const {data, isLoading, refetch, isError} = useQuery({
+    queryKey: ['All_Questions'],
+    queryFn: async () => {
+      const questions = await getAllQuestions(myToken);
+      console.log('all questions: ', questions)
+      setAllQuestions(Object.entries(questions))
+      return questions
+    }, 
+    enabled: myToken !== ""
+  })
+
+  const handleOptionSelect = (questionId: string, option: string) => {
+    setSelectedOptions(prevOptions => ({
+      ...prevOptions,
+      [questionId]: option
+    }));
+  };
+
+  const deleteQuestion = async (id:string)=>{
+    const response = await deleteSingleQuestion(id, myToken)
+    if(response){
+      toast.success('Question was deleted successfully', {position: 'top-right'})
+      refetch()
+    }else{
+      toast.error("Couldn't delete question.", {position:'top-right'} )
+    }
+  }
+  
+  // useEffect(()=>{
+  //   if(myToken !== ""){
+  //     router.push("/register")
+  //     return
+  //   }
+  // }, [myToken, router])
+
+  // if (typeof window !== 'undefined' && window.localStorage){
+  //   const token = localStorage.getItem("qt-token")
+  //   router.push('/register')
+
+    // if(!token){
+    // }
+    // setMyToken(JSON.parse(token!))
+    // }
+  
+    
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+    <main className="flex flex-col items-center justify-between  py-6">
+      <Toaster richColors />
+      <h2 className='text-3xl font-bold my-6'>ALL QUESTIONS</h2>
+      <div className='w-[90%] md:w-2/3 flex flex-col gap-y-6'>
+        {allQuestions && allQuestions?.length !== 0 ? allQuestions.map(([questionId, { question, options }]) => (
+          <div className='bg-slate-50 p-4 rounded-2xl shadow relative border' key={questionId}>
+            {openDialogue && <DialogueBox handleDelete={deleteQuestion} questionId={questionId} setOpen={setOpenDialogue} open={openDialogue} />}
+            <div className='absolute top-2 right-3 cursor-pointer' onClick={()=>setOpenDialogue((prev)=>!prev)}><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="w-5 h-5 text-red-400">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h3 className='font-semibold'>{question}</h3>
+            <ul className='flex flex-col gap-y-2 mt-3'>
+              {options.map((option, index) => (
+                <li key={index}>
+                  <label className='flex gap-2'>
+                    <input
+                      type="radio"
+                      name={questionId}
+                      value={option}
+                      checked={selectedOptions[questionId] === option}
+                      onChange={() => handleOptionSelect(questionId, option)}
+                    />
+                    {option}
+                    {selectedOptions[questionId] === option && <span>&#10003;</span>}
+                  </label>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )) : <div className='text-black mx-auto text-center mt-4'>There are no questions to display, kindly add new questions</div>}
       </div>
     </main>
   )
